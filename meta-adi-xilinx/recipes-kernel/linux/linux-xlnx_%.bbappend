@@ -5,7 +5,7 @@ ADI_VERSION = "adi_master"
 PV = "${LINUX_VERSION}-${ADI_VERSION}+git${SRCPV}"
 KBRANCH = "master"
 # needed for offline build
-SRCREV = "${@ "564bb35721991e0a65efd72aca0d40e6cb5f0ce7" if bb.utils.to_boolean(d.getVar('BB_NO_NETWORK')) else d.getVar('AUTOREV')}"
+SRCREV = "${@ "21a88cb29186148047515e1ec844ef237386bcf9" if bb.utils.to_boolean(d.getVar('BB_NO_NETWORK')) else d.getVar('AUTOREV')}"
 KERNELURI = "git://github.com/analogdevicesinc/linux.git;protocol=https"
 
 # override kernel config file
@@ -16,6 +16,6 @@ KBUILD_DEFCONFIG_microblaze = "adi_mb_defconfig"
 # In adi_mb_defconfig, CONFIG_INITRAMFS_SOURCE is enabled by default.
 # Since we are in petalinux already, a simpleImage will be build with the proper
 # initramfs so that, we don't have to provide an external one...
-do_configure_prepend_microblaze() {
+do_configure:prepend:microblaze() {
 	[ -f ${B}/.config ] && sed -i 's,CONFIG_INITRAMFS_SOURCE=.*,,' ${B}/.config
 }

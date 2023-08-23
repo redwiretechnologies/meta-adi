@@ -1,6 +1,6 @@
-FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
-SRC_URI_append_zynq = " \
+SRC_URI:append_zynq = " \
 		file://pl-delete-nodes-zynq-zed-adv7511-ad9361-fmcomms2-3.dtsi \
 		file://pl-delete-nodes-zynq-zc706-adv7511-ad9434-fmc-500ebz.dtsi \
 		file://pl-delete-nodes-zynq-zc706-adv7511-fmcdaq2.dtsi \
@@ -34,7 +34,7 @@ SRC_URI_append_zynq = " \
 		file://pl-delete-nodes-zynq-zc702-adv7511-ad9361-fmcomms5.dtsi \
 		file://pl-delete-nodes-zynq-zc702-adv7511.dtsi"
 
-SRC_URI_append_zynqmp = " \
+SRC_URI:append_zynqmp = " \
 		file://pl-zynqmp-zcu102-rev10-ad9361-fmcomms2-3-overlay.dtsi \
 		file://pl-delete-nodes-zynqmp-zcu102-rev10-adrv9009-jesd204-fsm.dtsi \
 		file://pl-delete-nodes-zynqmp-zcu102-rev10-fmcdaq2.dtsi \
@@ -52,7 +52,7 @@ SRC_URI_append_zynqmp = " \
 		file://pl-delete-nodes-zynqmp-adrv9009-zu11eg-revb-adrv2crr-fmc-revb-jesd204-fsm.dtsi \
 		file://pl-delete-nodes-zynqmp-adrv9009-zu11eg-revb-adrv2crr-fmc-revb-sync-fmcomms8-jesd204-fsm.dtsi"
 
-SRC_URI_append_microblaze = " \
+SRC_URI:append_microblaze = " \
 		file://pl-delete-nodes-fmcdaq2.dtsi \
 		file://pl-delete-nodes-kc705_fmcdaq2.dtsi \
 		file://pl-delete-nodes-kc705_ad9467_fmc.dtsi \
@@ -114,7 +114,7 @@ KERNEL_INCLUDE ?= "${STAGING_KERNEL_DIR}/scripts/dtc/include-prefixes"
 #	add the pl.dtsi so that IPs added to our reference designs are also included.
 #	Add the /include "pl-delete-nodes-*" to remove all the duplicated labels between ADI device trees and pl.dtsi.
 #	Include system-user.dtsi at the end of the devicetree so users can extend it.
-do_configure_append() {
+do_configure:append() {
 	local dtb_tag_file=${DTB_TAG_FILE}
 
 	[ ! -e "${WORKDIR}/${DTB_PL_DELETE}.dtsi" ] && \
