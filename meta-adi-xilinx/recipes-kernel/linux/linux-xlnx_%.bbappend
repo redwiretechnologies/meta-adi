@@ -3,7 +3,7 @@ LINUX_VERSION = "5.10"
 ADI_VERSION = "adi_master"
 
 PV = "${LINUX_VERSION}-${ADI_VERSION}+git${SRCPV}"
-KBRANCH = "master"
+KBRANCH = "main"
 # needed for offline build
 SRCREV = "${@ "21a88cb29186148047515e1ec844ef237386bcf9" if bb.utils.to_boolean(d.getVar('BB_NO_NETWORK')) else d.getVar('AUTOREV')}"
 KERNELURI = "git://github.com/analogdevicesinc/linux.git;protocol=https"
