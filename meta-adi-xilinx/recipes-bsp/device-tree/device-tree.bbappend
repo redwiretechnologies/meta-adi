@@ -1,6 +1,6 @@
-FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
-SRC_URI_append_zynq = " \
+SRC_URI:append:zynq = " \
 		file://pl-delete-nodes-zynq-zed-adv7511-ad9361-fmcomms2-3.dtsi \
 		file://pl-delete-nodes-zynq-zc706-adv7511-ad9434-fmc-500ebz.dtsi \
 		file://pl-delete-nodes-zynq-zc706-adv7511-fmcdaq2.dtsi \
@@ -34,7 +34,7 @@ SRC_URI_append_zynq = " \
 		file://pl-delete-nodes-zynq-zc702-adv7511-ad9361-fmcomms5.dtsi \
 		file://pl-delete-nodes-zynq-zc702-adv7511.dtsi"
 
-SRC_URI_append_zynqmp = " \
+SRC_URI:append:zynqmp = " \
 		file://pl-zynqmp-zcu102-rev10-ad9361-fmcomms2-3-overlay.dtsi \
 		file://pl-delete-nodes-zynqmp-zcu102-rev10-adrv9009-jesd204-fsm.dtsi \
 		file://pl-delete-nodes-zynqmp-zcu102-rev10-fmcdaq2.dtsi \
@@ -50,9 +50,10 @@ SRC_URI_append_zynqmp = " \
 		file://pl-delete-nodes-zynqmp-zcu102-rev10-adrv9002.dtsi \
 		file://pl-delete-nodes-zynqmp-zcu102-rev10-adrv9002-rx2tx2.dtsi \
 		file://pl-delete-nodes-zynqmp-adrv9009-zu11eg-revb-adrv2crr-fmc-revb-jesd204-fsm.dtsi \
+		file://pl-delete-nodes-zynqmp-zcu102-rev10-adrv9025.dtsi \
 		file://pl-delete-nodes-zynqmp-adrv9009-zu11eg-revb-adrv2crr-fmc-revb-sync-fmcomms8-jesd204-fsm.dtsi"
 
-SRC_URI_append_microblaze = " \
+SRC_URI:append:microblaze = " \
 		file://pl-delete-nodes-fmcdaq2.dtsi \
 		file://pl-delete-nodes-kc705_fmcdaq2.dtsi \
 		file://pl-delete-nodes-kc705_ad9467_fmc.dtsi \
@@ -67,6 +68,11 @@ SRC_URI_append_microblaze = " \
 		file://pl-delete-nodes-vc707_fmcadc5.dtsi \
 		file://pl-delete-nodes-vcu118_ad9081_m8_l4.dtsi"
 
+SRC_URI:append:versal = " \
+		file://pl-delete-nodes-versal-vck190-reva-ad9081.dtsi \
+		file://pl-delete-nodes-versal-vck190-reva-ad9081-204c-txmode22-rxmode23.dtsi \
+		file://pl-delete-nodes-versal-vck190-reva-ad9082-204c-txmode22-rxmode23.dtsi"
+
 python __anonymous() {
     if not d.getVar("KERNEL_DTB"):
         """this is a warn and not fatal because `petalinux-config --get-hw-description` is using
@@ -77,9 +83,9 @@ Make sure to define it in a conf file...")
 }
 DTB_PL_DELETE ?= "pl-delete-nodes-${KERNEL_DTB}"
 
-DTS_INCLUDE_PATH_zynq = "${STAGING_KERNEL_DIR}/arch/${ARCH}/boot/dts"
-DTS_INCLUDE_PATH_zynqmp = "${STAGING_KERNEL_DIR}/arch/${ARCH}/boot/dts/xilinx"
-DTS_INCLUDE_PATH_microblaze = "${STAGING_KERNEL_DIR}/arch/${ARCH}/boot/dts"
+DTS_INCLUDE_PATH = "${STAGING_KERNEL_DIR}/arch/${ARCH}/boot/dts"
+DTS_INCLUDE_PATH:zynqmp = "${STAGING_KERNEL_DIR}/arch/${ARCH}/boot/dts/xilinx"
+DTS_INCLUDE_PATH:versal = "${STAGING_KERNEL_DIR}/arch/${ARCH}/boot/dts/xilinx"
 # can be set to "n", if we do not use in kernel devicetrees and hence, we do not need to copy them to ${WORKDIR}.
 # it naturally implies ${KERNEL_DTB_PATH} != ${DTS_INCLUDE_PATH}
 USE_KERNEL_SOURCES ?= "y"
@@ -88,25 +94,27 @@ KERNEL_DTB_PATH ?= "${DTS_INCLUDE_PATH}"
 # zynq has some corner case where this will be overwritten
 DTB_TAG_FILE ?= "${DT_FILES_PATH}/system-top.dts"
 # zynqMP has some corner cases where this will be overwritten
-DTB_TAG_FILE_zynqmp ?= "${WORKDIR}/zynqmp-zcu102-revA.dts"
+DTB_TAG_FILE:zynqmp ?= "${WORKDIR}/zynqmp-zcu102-revA.dts"
+DTB_TAG_FILE:versal ?= "${WORKDIR}/versal.dtsi"
 
 # Only used when FPGA_MANAGER is enabled. These are only some defaults. Note that, for example, for Microblaze
 # vc707.dts won't be a good choice if your platform is based on kc705 for instance...
-DTS_BASE_zynq ?= "${DTS_INCLUDE_PATH}/zynq-zc706"
-DTS_BASE_zynqmp ?= "${DTS_INCLUDE_PATH}/zynqmp-zcu102-rev1.0"
-DTS_BASE_microblaze ?= "${DTS_INCLUDE_PATH}/vc707"
+DTS_BASE:zynq ?= "${DTS_INCLUDE_PATH}/zynq-zc706"
+DTS_BASE:zynqmp ?= "${DTS_INCLUDE_PATH}/zynqmp-zcu102-rev1.0"
+DTS_BASE:microblaze ?= "${DTS_INCLUDE_PATH}/vc707"
+DTS_BASE:versal ?= "${DTS_INCLUDE_PATH}/versal-vck190-revA"
 DTS_OVERLAY ?= "pl-${KERNEL_DTB}-overlay.dtsi"
 DTS_OVERLAY_PATH ?= "${WORKDIR}"
 # Make sure that the kernel sources are available
 do_configure[depends] += "virtual/kernel:do_configure"
 
-# By default, devicetree.bbclass will point dtc and the preprocessor to the kernel
-# sources to look for devicetrees. Since we will always copy all the devicetrees of
-# interest to the local WORKDIR (being them in kernel or not) we will just add
-# include-prefixes as include dir. Otherwise, we would have two different locations
-# with the same files given as include dir and hope that the directory we want to take
-# effect to be included first...
-KERNEL_INCLUDE ?= "${STAGING_KERNEL_DIR}/scripts/dtc/include-prefixes"
+# Remove this path from being included as it was conflicting with our internal devicetrees.
+# Moreover, the order by which the include paths are given to dtc looks to be random and changes
+# from build to build. Hence, for some projects (eg: kcu105_adrv9371x), whenever this path was
+# given first, the build was failing since there are "colliding" .dtsi files and the ones given
+# by xilinx make some assumptions about node names that are not true for every devicetree
+# (including our owns).
+DT_INCLUDE:remove = "${S}/device_tree/data/kernel_dtsi/${DT_RELEASE_VERSION}/BOARD/"
 
 # Based on the selected device tree, this function will:
 #	copy the device trees of interest to ${WORKDIR}.
@@ -114,7 +122,7 @@ KERNEL_INCLUDE ?= "${STAGING_KERNEL_DIR}/scripts/dtc/include-prefixes"
 #	add the pl.dtsi so that IPs added to our reference designs are also included.
 #	Add the /include "pl-delete-nodes-*" to remove all the duplicated labels between ADI device trees and pl.dtsi.
 #	Include system-user.dtsi at the end of the devicetree so users can extend it.
-do_configure_append() {
+do_configure:append() {
 	local dtb_tag_file=${DTB_TAG_FILE}
 
 	[ ! -e "${WORKDIR}/${DTB_PL_DELETE}.dtsi" ] && \
@@ -124,8 +132,15 @@ do_configure_append() {
 	# logic on the $dtb_tag_file without directly changing the original file (being it an in kernel
 	# devicetree or not). In case it's an in kernel devicetree, changing it would actually
 	# break the kernel compilation
-	[ ${USE_KERNEL_SOURCES} == "y" ] && cp -rf "${DTS_INCLUDE_PATH}/"* "${WORKDIR}/"
-	[ ${KERNEL_DTB_PATH} != ${DTS_INCLUDE_PATH} ] && cp -rf "${KERNEL_DTB_PATH}/"* "${WORKDIR}/"
+	[ "${USE_KERNEL_SOURCES}" = "y" ] && { \
+		cp -Rf "${DTS_INCLUDE_PATH}/"* "${WORKDIR}/"
+		# make sure to follow symlinks
+		cp -Rfl "${STAGING_KERNEL_DIR}/scripts/dtc/include-prefixes/"* "${WORKDIR}/"
+	}
+
+	[ "${KERNEL_DTB_PATH}" != "${WORKDIR}" ] && \
+		[ "${KERNEL_DTB_PATH}" != "${DTS_INCLUDE_PATH}" ] && cp -Rf "${KERNEL_DTB_PATH}/"* "${WORKDIR}/"
+
 
 	# Used to see if the PL part is being compiled as an overlay! In that case, we cannot apply our normal workflow since it would fail!
 	# We try to keep the approach used by petalinux here, which is, if you build your PL as an overlay, then you should just have a

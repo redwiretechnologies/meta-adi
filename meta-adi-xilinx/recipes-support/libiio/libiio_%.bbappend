@@ -1,37 +1,25 @@
-FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
-BRANCH ?= "master"
-SRCREV = "${@ "92d6a35f3d8d721cda7d6fe664b435311dd368b4" if bb.utils.to_boolean(d.getVar('BB_NO_NETWORK')) else d.getVar('AUTOREV')}"
-SRC_URI_append = ";branch=${BRANCH} file://syvinitscript.patch"
-PV = "0.23+git${SRCPV}"
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
+BRANCH ?= "libiio-v0"
+SRCREV = "${@ "0d8a69aaf2f064cafaa9a962308f679f9b8fa982" if bb.utils.to_boolean(d.getVar('BB_NO_NETWORK')) else d.getVar('AUTOREV')}"
+# Just overwrite SRC_URI as we would need to delete the python bindings patch since it does not apply
+# (already fixed in 0.24) and we do not want to hardcode ';branch=master' so that we would also have to
+# remove that leaving the variable empty anyways.
+SRC_URI = "git://github.com/analogdevicesinc/libiio.git;protocol=https;branch=${BRANCH} \
+           file://syvinitscript.patch \
+"
+PV = "0.25+git${SRCPV}"
 
-EXTRA_OECMAKE += "${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', '-DWITH_SYSVINIT=on', '', d)}"
-# This is enabled by default if network_backend is enabled. But if zeroconf is not present, we cannot
-# have DHAVE_DNS_SD=ON
-EXTRA_OECMAKE += "${@bb.utils.contains('DISTRO_FEATURES', 'zeroconf', '', '-DHAVE_DNS_SD=off', d)}"
+EXTRA_OECMAKE += " \
+	${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', '-DWITH_SYSVINIT=on', '', d)} \
+	-DCPP_BINDINGS=ON \
+	-DFLEX_TARGET_ARG_COMPILE_FLAGS='--noline' \
+	-DBISON_TARGET_ARG_COMPILE_FLAGS='--no-lines' \
+"
 
-inherit update-rc.d setuptools3
+inherit update-rc.d pkgconfig
 
 INITSCRIPT_NAME = "${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', 'iiod', '', d)}"
 
-PACKAGECONFIG ?= "usb_backend network_backend serial_backend libiio-python3"
+PACKAGECONFIG ?= "usb_backend network_backend serial_backend libiio-python3 hwmon"
 
-PACKAGECONFIG[serial_backend] = "-DWITH_SERIAL_BACKEND=ON,-DWITH_SERIAL_BACKEND=off,libserialport libxml2"
-
-# Inheriting setuptools3 incorrectly adds the dependency on ${PYTHON_PN}-core
-# to ${PN} instead of to ${PN}-${PYTHON_PN} where it belongs.
-RDEPENDS_${PN}_remove = "${PYTHON_PN}-core"
-RDEPENDS_${PN}-${PYTHON_PN} =+ "${PYTHON_PN}-core"
-
-# Explicitly define do_configure, do_compile and do_install because both cmake and setuptools3 have
-# EXPORT_FUNCTIONS do_configure do_compile do_install
-do_configure() {
-	cmake_do_configure
-}
-
-do_compile() {
-	cmake_do_compile
-}
-
-do_install() {
-	cmake_do_install
-}
+PACKAGECONFIG[hwmon] = "-DWITH_HWMON=ON,-DWITH_HWMON=OFF"

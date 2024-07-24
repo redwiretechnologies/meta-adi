@@ -1,14 +1,14 @@
 SUMMARY = "Tools to display/manipulate FMC FRU info"
 HOMEPAGE = "https://wiki.analog.com/resources/tools-software/linux-software/fru_dump?s[]=fru&s[]=tools"
 SECTION = "console/utils"
-LICENSE = "GPLv2"
+LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://license.txt;md5=b234ee4d69f5fce4486a80fdaf4a4263"
 
-BRANCH = "master"
+BRANCH = "main"
 # If we are in an offline build we cannot use AUTOREV since it would require internet!
-SRCREV = "${@ "5ee5bf5ab59abdcc350df79696758ea5ff9f33c7" if bb.utils.to_boolean(d.getVar('BB_NO_NETWORK')) else d.getVar('AUTOREV')}"
+SRCREV = "${@ "4a18979382d59dd956bc11a6606d460e3f8937ca" if bb.utils.to_boolean(d.getVar('BB_NO_NETWORK')) else d.getVar('AUTOREV')}"
 SRC_URI = "git://github.com/analogdevicesinc/fru_tools.git;protocol=https;branch=${BRANCH}"
-PV_append = "+git${SRCPV}"
+PV:append = "+git${SRCPV}"
 
 S = "${WORKDIR}/git"
 
@@ -16,7 +16,7 @@ userlocaldir = "/usr/local"
 bindest = "${userlocaldir}/bin"
 masterfile = "${userlocaldir}/lib/fmc-tools/"
 
-FILES_${PN} = "${bindest}/fru-dump ${masterfile} \
+FILES:${PN} = "${bindest}/fru-dump ${masterfile} \
 	${userlocaldir}/share/man/man1/fru-dump.1"
 
 # so that the compiled artifact respects the OpenEmbedded ldflags
